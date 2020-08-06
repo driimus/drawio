@@ -1,6 +1,6 @@
 module.exports = {
-	disableUpdate: function() 
+	disableUpdate: function()
 	{
-		return false;
+		return true;
 	}
 }
