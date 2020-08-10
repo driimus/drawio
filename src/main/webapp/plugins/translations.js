@@ -154,9 +154,19 @@ Draw.loadPlugin(function (editorUi) {
     }
 
     function getAllTags() {
-      return getAllTagsForCells(
-        graph.model.getDescendants(graph.model.getRoot())
-      );
+      const cells = graph.model.getDescendants(graph.model.getRoot());
+
+      const a = document.createElement("a");
+      const type = "txt";
+      a.href =
+        "data:text/json;charset=utf-8," +
+        encodeURIComponent(
+          JSON.stringify(cells, (k, v) => (k == "parent" ? v.id : v))
+        );
+
+      a.download = "myNotes.txt";
+      a.click();
+      return getAllTagsForCells(cells);
     }
 
     /**
