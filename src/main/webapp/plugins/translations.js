@@ -165,6 +165,29 @@ Draw.loadPlugin(function (editorUi) {
       return lookup;
     }
 
+    function getLabelText(node) {
+      const label = node.getAttribute("label") || node.getAttribute("value");
+      const temp = document.createElement("template");
+      temp.innerHTML = label;
+      const v = temp.content.cloneNode(true).firstChild || "";
+      return v.innerText || label;
+    }
+
+    const parser = (obj, translation) => {
+      const tags = translation.getAttribute("tags");
+      const k = tags ? tags.split(" ")[0] : "EN";
+      obj[k] = getLabelText(translation);
+      return obj;
+    };
+
+    function parseLabel(labelNode) {
+      const children = labelNode.children || [];
+      return {
+        type: labelNode.getAttribute("type") || "text",
+        key: labelNode.getAttribute("key"),
+        translations: children.reduce(parser, {}),
+      };
+    }
 
     class Node {
       constructor(obj) {
