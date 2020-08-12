@@ -84,6 +84,18 @@ Draw.loadPlugin(function (editorUi) {
     tagCloud.style.height = "auto";
     div.appendChild(tagCloud);
 
+    var btn = mxUtils.button("Export", function () {
+      // parse and export
+      const root = graph.model.getRoot();
+      exportGraph(root);
+    });
+
+    btn.setAttribute("title", "Export");
+    btn.style.marginTop = "8px";
+    btn.className = "geBtn gePrimaryBtn";
+
+    div.appendChild(btn);
+
     var graph = editorUi.editor.graph;
     var lastValue = null;
 
