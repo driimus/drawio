@@ -1,16 +1,3 @@
-/**
- * Tags plugin.
- *
- * - Set tags via dialog
- * - Toggle hidden tags
- * - Stateless filter
- *
- * TODO:
- *
- * - Add hiddenTags to viewState of page
- * - Export to PDF ignores current tags
- * - Sync hiddenTags with removed tags
- */
 Draw.loadPlugin(function (editorUi) {
   var div = document.createElement("div");
 
@@ -75,7 +62,7 @@ Draw.loadPlugin(function (editorUi) {
     div.appendChild(searchInput);
 
     var filterInput = searchInput.cloneNode(true);
-    filterInput.setAttribute("placeholder", "Filter tags");
+    filterInput.setAttribute("placeholder", "Filter languages");
     div.appendChild(filterInput);
 
     var tagCloud = document.createElement("div");
@@ -189,6 +176,7 @@ Draw.loadPlugin(function (editorUi) {
       };
     }
 
+    // Node class that removes any functionality and redundant properties
     class Node {
       constructor(obj) {
         this.id = obj.id;
@@ -196,16 +184,24 @@ Draw.loadPlugin(function (editorUi) {
         this.key = obj.getAttribute("key");
         this.label = getLabelText(obj);
         this.vertex = obj.vertex ? true : false;
-        this.edge = !this.vertex;
 
         const { parent = {} } = obj;
         this.parent = parent.id;
       }
     }
 
+    // Edge class that removes any functionality and redundant properties
+    class Edge {
+      constructor({ id, source, target }) {
+        this.id = id;
+        this.source = source.id;
+        this.target = target.id;
+        this.edge = true;
+      }
+    }
+
     function exportGraph(root) {
       const visited = new Set();
-      const removableContainers = new Set();
 
       function traverse(n) {
         let node = new Node(n);
@@ -225,12 +221,7 @@ Draw.loadPlugin(function (editorUi) {
             if (local) node.local = local;
             break;
           case "Card":
-            // TO-DO
-            // steal the parent node's ID
-            node.id = node.parent;
-            delete node.parent;
-            // remove parent node
-            removableContainers.add(node.id);
+            // the work is done
             break;
           case "CardAction":
             // TO-DO
@@ -249,14 +240,14 @@ Draw.loadPlugin(function (editorUi) {
       }
 
       // Clean up the graph
-      let cells = graph.model.getDescendants(root).map((node) => {
-        if (node.children) node.children = node.children.map(traverse);
+      let cells = graph.model.getDescendants(root).slice(2);
+      cells = cells.map((node) => {
+        if (node.edge) {
+          return new Edge(node);
+        }
+        // if (node.children) node.children = node.children.map(traverse);
         node = traverse(node);
       });
-
-      cells = cells.filter(
-        (cell) => cell.type || !removableContainers.has(cell.id)
-      );
 
       // Export as JSON file
       const a = document.createElement("a");
