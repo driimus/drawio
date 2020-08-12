@@ -209,21 +209,6 @@ Draw.loadPlugin(function (editorUi) {
       );
     };
 
-    // function setCellsVisibleForTag(tag, visible) {
-    //   var cells = graph.getCellsForTags([tag], null, propertyName, true);
-
-    //   // Ignores layers for selection
-    //   var temp = [];
-
-    //   for (var i = 0; i < cells.length; i++) {
-    //     if (graph.model.isVertex(cells[i]) || graph.model.isEdge(cells[i])) {
-    //       temp.push(cells[i]);
-    //     }
-    //   }
-
-    //   graph.setCellsVisible(cells, visible);
-    // }
-
     function updateSelectedTags(tags, selected, selectedColor, filter) {
       tagCloud.innerHTML = "";
 
