@@ -203,16 +203,70 @@ Draw.loadPlugin(function (editorUi) {
       }
     }
 
+    function exportGraph(root) {
+      const visited = new Set();
+      const removableContainers = new Set();
+
+      function traverse(n) {
+        let node = new Node(n);
+
+        if (visited.has(node.id)) return;
+        visited.add(node.id);
+
+        switch (node.type) {
+          case "internalDialog":
+          case "dialogPointer":
+          case "endDialog":
+          case "root":
+          case "media": // action card video
+            // base node + name + local
+            node.name = n.getAttribute("name");
+            const local = n.getAttribute("local");
+            if (local) node.local = local;
+            break;
+          case "Card":
+            // TO-DO
+            // steal the parent node's ID
+            node.id = node.parent;
+            delete node.parent;
+            // remove parent node
+            removableContainers.add(node.id);
+            break;
+          case "CardAction":
+            // TO-DO
+            break;
+        }
+        if (n.getAttribute("tags")) {
+          console.log("breaking");
+          return;
+        }
+        // if it has a key, it's a label and needs to be parsed
+        if (n.getAttribute("key")) {
+          node = { ...parseLabel(n), ...node };
+        }
+
+        return node;
+      }
+
+      // Clean up the graph
+      let cells = graph.model.getDescendants(root).map((node) => {
+        if (node.children) node.children = node.children.map(traverse);
+        node = traverse(node);
+      });
+
+      cells = cells.filter(
+        (cell) => cell.type || !removableContainers.has(cell.id)
+      );
+
+      // Export as JSON file
       const a = document.createElement("a");
-      const type = "txt";
       a.href =
         "data:text/json;charset=utf-8," +
-        encodeURIComponent(
-          JSON.stringify(cells, (k, v) => (k == "parent" ? v.id : v))
-        );
+        encodeURIComponent(JSON.stringify(cells));
 
-      a.download = "myNotes.txt";
+      a.download = "graph.json";
       a.click();
+    }
 
     function getAllTags() {
       const cells = graph.model.getDescendants(graph.model.getRoot());
