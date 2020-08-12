@@ -165,8 +165,20 @@ Draw.loadPlugin(function (editorUi) {
       return lookup;
     }
 
-    function getAllTags() {
-      const cells = graph.model.getDescendants(graph.model.getRoot());
+
+    class Node {
+      constructor(obj) {
+        this.id = obj.id;
+        this.type = obj.getAttribute("type");
+        this.key = obj.getAttribute("key");
+        this.label = getLabelText(obj);
+        this.vertex = obj.vertex ? true : false;
+        this.edge = !this.vertex;
+
+        const { parent = {} } = obj;
+        this.parent = parent.id;
+      }
+    }
 
       const a = document.createElement("a");
       const type = "txt";
@@ -178,6 +190,9 @@ Draw.loadPlugin(function (editorUi) {
 
       a.download = "myNotes.txt";
       a.click();
+
+    function getAllTags() {
+      const cells = graph.model.getDescendants(graph.model.getRoot());
       return getAllTagsForCells(cells);
     }
 
