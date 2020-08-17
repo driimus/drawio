@@ -197,6 +197,10 @@ Draw.loadPlugin(function (editorUi) {
         this.source = source.id;
         this.target = target.id;
         this.edge = true;
+
+        // Optionals, if undef they get stripped when converting to JSON anyway
+        this.key = obj.getAttribute("key");
+        this.label = getLabelText(obj);
       }
     }
 
@@ -216,7 +220,7 @@ Draw.loadPlugin(function (editorUi) {
           case "root":
           case "media": // action card video
             // base node + name + local
-            node.name = n.getAttribute("name");
+            node.label = n.getAttribute("name") || node.label;
             const local = n.getAttribute("local");
             if (local) node.local = local;
             break;
@@ -224,7 +228,16 @@ Draw.loadPlugin(function (editorUi) {
             // the work is done
             break;
           case "CardAction":
-            // TO-DO
+            node = {
+              ...node,
+              label: n.getAttribute("actionType"),
+              title: n.children.find(
+                (child) => child.getAttribute("type") === "title"
+              ).id,
+              value: n.children.find(
+                (child) => child.getAttribute("type") === "value"
+              ).id,
+            };
             break;
         }
         if (n.getAttribute("tags")) {
