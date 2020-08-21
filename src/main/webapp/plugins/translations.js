@@ -192,7 +192,8 @@ Draw.loadPlugin(function (editorUi) {
 
     // Edge class that removes any functionality and redundant properties
     class Edge {
-      constructor({ id, source, target }) {
+      constructor(obj) {
+        const { id, source, target } = obj;
         this.id = id;
         this.source = source.id;
         this.target = target.id;
@@ -254,13 +255,9 @@ Draw.loadPlugin(function (editorUi) {
 
       // Clean up the graph
       let cells = graph.model.getDescendants(root).slice(2);
-      cells = cells.map((node) => {
-        if (node.edge) {
-          return new Edge(node);
-        }
-        // if (node.children) node.children = node.children.map(traverse);
-        node = traverse(node);
-      });
+      cells = cells
+        .map((node) => (node.edge ? new Edge(node) : traverse(node)))
+        .filter((n) => n);
 
       // Export as JSON file
       const a = document.createElement("a");
