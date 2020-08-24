@@ -222,8 +222,9 @@ Draw.loadPlugin(function (editorUi) {
           case "media": // action card video
             // base node + name + local
             node.label = n.getAttribute("name") || node.label;
-            const local = n.getAttribute("local");
-            if (local) node.local = local;
+            try {
+              node.local = JSON.parse(n.getAttribute("local"));
+            } catch (e) {}
             break;
           case "Card":
             // the work is done
