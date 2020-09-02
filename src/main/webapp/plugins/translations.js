@@ -162,8 +162,8 @@ Draw.loadPlugin(function (editorUi) {
 
     const parser = (obj, translation) => {
       const tags = translation.getAttribute("tags");
-      const k = tags ? tags.split(" ")[0] : "EN";
-      obj[k] = getLabelText(translation);
+      const k = tags ? tags.split(" ")[0] : "en";
+      obj[k.toLowerCase()] = getLabelText(translation);
       return obj;
     };
 
@@ -205,66 +205,75 @@ Draw.loadPlugin(function (editorUi) {
       }
     }
 
+    function traverse(n, visited) {
+      let node = new Node(n);
+
+      if (visited.has(node.id)) return;
+      visited.add(node.id);
+
+      switch (node.type) {
+        case "root": {
+          node.fileName = n.getAttribute("fileName");
+        }
+        case "internalDialog":
+        case "dialogPointer":
+        case "endDialog":
+        case "media": // action card video
+          // base node + name + local
+          node.label = n.getAttribute("name") || node.label;
+          try {
+            node.local = JSON.parse(n.getAttribute("local"));
+          } catch (e) {}
+          break;
+        case "Card":
+          // the work is done
+          break;
+        case "CardAction":
+          node = {
+            ...node,
+            label: n.getAttribute("actionType"),
+            title: n.children.find(
+              (child) => child.getAttribute("type") === "title"
+            ).id,
+            value: n.children.find(
+              (child) => child.getAttribute("type") === "value"
+            ).id,
+          };
+          break;
+      }
+      if (n.getAttribute("tags")) {
+        console.log("breaking");
+        return;
+      }
+      // if it has a key, it's a label and needs to be parsed
+      if (n.getAttribute("key")) {
+        node = { ...parseLabel(n), ...node };
+      }
+
+      return node;
+    }
+
     function exportGraph(root) {
       const visited = new Set();
 
-      function traverse(n) {
-        let node = new Node(n);
-
-        if (visited.has(node.id)) return;
-        visited.add(node.id);
-
-        switch (node.type) {
-          case "internalDialog":
-          case "dialogPointer":
-          case "endDialog":
-          case "root":
-          case "media": // action card video
-            // base node + name + local
-            node.label = n.getAttribute("name") || node.label;
-            try {
-              node.local = JSON.parse(n.getAttribute("local"));
-            } catch (e) {}
-            break;
-          case "Card":
-            // the work is done
-            break;
-          case "CardAction":
-            node = {
-              ...node,
-              label: n.getAttribute("actionType"),
-              title: n.children.find(
-                (child) => child.getAttribute("type") === "title"
-              ).id,
-              value: n.children.find(
-                (child) => child.getAttribute("type") === "value"
-              ).id,
-            };
-            break;
-        }
-        if (n.getAttribute("tags")) {
-          console.log("breaking");
-          return;
-        }
-        // if it has a key, it's a label and needs to be parsed
-        if (n.getAttribute("key")) {
-          node = { ...parseLabel(n), ...node };
-        }
-
-        return node;
-      }
-
-      // Clean up the graph
-      let cells = graph.model.getDescendants(root).slice(2);
-      cells = cells
-        .map((node) => (node.edge ? new Edge(node) : traverse(node)))
+      const cells = graph.model
+        .getDescendants(root)
+        // remove unneeded canvas nodes
+        .slice(2)
+        // convert nodes to appropriate format
+        .map((node) => (node.edge ? new Edge(node) : traverse(node, visited)))
+        // remove undefined/null elems
         .filter((n) => n);
 
+      downloadAsJson(cells);
+    }
+
+    function downloadAsJson(obj) {
       // Export as JSON file
       const a = document.createElement("a");
       a.href =
         "data:text/json;charset=utf-8," +
-        encodeURIComponent(JSON.stringify(cells));
+        encodeURIComponent(JSON.stringify(obj));
 
       a.download = "graph.json";
       a.click();
